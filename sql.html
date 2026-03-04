@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Lab — Aprende SQL Interactivo</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --keyword: #7c3aed;
+    --func: #00d4ff;
+    --string: #10b981;
+    --number: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 48px 0 32px;
+    text-align: center;
+    position: relative;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle { color: var(--muted); font-size: 1.1rem; }
+
+  /* PROGRESS BAR */
+  .progress-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 28px;
+    margin: 24px 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .progress-label { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .progress-count { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--accent); white-space: nowrap; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 8px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+  .tab {
+    flex: 1; padding: 10px;
+    border: none; border-radius: 8px;
+    background: transparent; color: var(--muted);
+    font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+  }
+  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+  /* CARDS */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+  .question-card:hover { border-color: rgba(0,212,255,0.3); }
+  .question-card.correct { border-color: var(--green); background: rgba(16,185,129,0.05); }
+  .question-card.incorrect { border-color: var(--red); background: rgba(239,68,68,0.05); }
+
+  .q-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .q-number {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; font-weight: 700;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .q-title { font-size: 1rem; font-weight: 600; line-height: 1.4; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #070b14;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 14px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 2;
+  }
+  .kw { color: #c084fc; font-weight: 700; }
+  .fn { color: var(--func); }
+  .str { color: var(--string); }
+  .num { color: var(--number); }
+  .cm { color: var(--muted); font-style: italic; }
+  .tbl { color: #fb923c; }
+  .col { color: #f1f5f9; }
+
+  /* OPTIONS */
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.2s;
+  }
+  .option:hover:not(:disabled) { border-color: var(--accent); background: rgba(0,212,255,0.06); }
+  .option.selected-correct { background: rgba(16,185,129,0.12); border-color: var(--green); color: var(--green); }
+  .option.selected-wrong { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+  .option.reveal-correct { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.4); color: var(--green); }
+  .option:disabled { cursor: default; }
+
+  /* FEEDBACK */
+  .feedback {
+    display: none;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 12px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .feedback.show { display: block; animation: fadeIn 0.3s ease; }
+  .feedback.correct { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
+  .feedback.incorrect { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+
+  /* SQL EDITOR */
+  .editor-area {
+    background: #070b14;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 14px 0;
+  }
+  .editor-header {
+    background: var(--surface2);
+    padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .editor-dot:nth-child(1) { background: #ef4444; }
+  .editor-dot:nth-child(2) { background: var(--yellow); }
+  .editor-dot:nth-child(3) { background: var(--green); }
+  .editor-title { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
+  textarea.sql-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    padding: 16px;
+    resize: none;
+    min-height: 120px;
+  }
+  textarea.sql-input::placeholder { color: var(--muted); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+
+  .btn-row { display: flex; gap: 10px; align-items: center; }
+
+  /* HINT */
+  .hint-box {
+    background: rgba(124,58,237,0.08);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #c4b5fd;
+    display: none;
+  }
+  .hint-box.show { display: block; animation: fadeIn 0.3s ease; }
+
+  /* SCHEMA VIEWER */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .schema-table {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .schema-table-name {
+    background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(124,58,237,0.15));
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .schema-col {
+    padding: 5px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex; justify-content: space-between;
+  }
+  .schema-col .col-type { color: var(--yellow); }
+  .schema-col.pk .col-name { color: var(--green); }
+
+  /* SCORE BANNER */
+  .score-banner {
+    background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(124,58,237,0.1));
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 16px;
+    padding: 20px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .score-stat { text-align: center; }
+  .score-stat .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .score-stat .lbl { font-size: 0.75rem; color: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .options { grid-template-columns: 1fr; }
+    .score-banner { flex-wrap: wrap; }
+    h1 { font-size: 2rem; }
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.success { border-color: var(--green); }
+  .toast.error { border-color: var(--red); }
+
+  .section-title {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: block; width: 4px; height: 20px;
+    background: linear-gradient(var(--accent), var(--accent2));
+    border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-badge">⚡ SQL Lab</div>
+    <h1>Aprende <span>SQL</span><br>de forma práctica</h1>
+    <p class="subtitle">Preguntas teóricas + Práctica de escritura de código</p>
+  </header>
+
+  <div class="progress-section">
+    <span class="progress-label">Tu progreso</span>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-count" id="progressCount">0 / 0</span>
+  </div>
+
+  <div class="score-banner">
+    <div class="score-stat"><div class="val" id="scoreCorrect">0</div><div class="lbl">Correctas</div></div>
+    <div class="score-stat"><div class="val" id="scoreWrong">0</div><div class="lbl">Incorrectas</div></div>
+    <div class="score-stat"><div class="val" id="scoreCode">0</div><div class="lbl">Código OK</div></div>
+    <div class="score-stat"><div class="val" id="scorePct">0%</div><div class="lbl">Efectividad</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('teoria')">📚 Teoría</button>
+    <button class="tab" onclick="switchTab('practica')">⌨️ Escribe SQL</button>
+    <button class="tab" onclick="switchTab('schema')">🗃️ Schema DB</button>
+  </div>
+
+  <!-- TEORIA TAB -->
+  <div id="tab-teoria" class="tab-content active"></div>
+
+  <!-- PRACTICA TAB -->
+  <div id="tab-practica" class="tab-content"></div>
+
+  <!-- SCHEMA TAB -->
+  <div id="tab-schema" class="tab-content">
+    <div class="question-card">
+      <p class="section-title">Base de datos: employees</p>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px;">Esquema de tablas disponible para todas las consultas SQL.</p>
+      <div class="schema-grid" id="schemaGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA =====================
+const teoriaQuestions = [
+  {
+    q: "¿Qué hace la función AVG() en SQL?",
+    code: null,
+    options: ["Devuelve el valor máximo", "Calcula el promedio de una columna numérica", "Cuenta el número de filas", "Suma todos los valores"],
+    correct: 1,
+    explanation: "AVG() calcula el promedio aritmético de los valores de una columna. Ejemplo: SELECT AVG(salary) FROM salaries; devuelve el salario promedio."
+  },
+  {
+    q: "¿Qué resultado devuelve esta consulta?",
+    code: `<span class="kw">SELECT</span> <span class="fn">MAX</span>(<span class="col">salary</span>) - <span class="fn">MIN</span>(<span class="col">salary</span>) <span class="kw">AS</span> diferencia\n<span class="kw">FROM</span> <span class="tbl">salaries</span>;`,
+    options: ["El salario promedio", "La diferencia entre el mayor y menor salario", "Todos los salarios ordenados", "La suma total de salarios"],
+    correct: 1,
+    explanation: "MAX(salary) - MIN(salary) calcula el rango salarial: la diferencia entre el salario más alto y el más bajo. El alias 'diferencia' le da nombre al resultado."
+  },
+  {
+    q: "¿Qué hace TIMESTAMPDIFF(YEAR, hire_date, CURDATE())?",
+    code: `<span class="kw">SELECT</span> <span class="fn">TIMESTAMPDIFF</span>(<span class="str">YEAR</span>, <span class="col">hire_date</span>, <span class="fn">CURDATE</span>()) <span class="kw">AS</span> antiguedad\n<span class="kw">FROM</span> <span class="tbl">employees</span>;`,
+    options: ["Devuelve la fecha de contratación", "Calcula los años de antigüedad del empleado", "Cuenta cuántos empleados hay", "Convierte fecha a texto"],
+    correct: 1,
+    explanation: "TIMESTAMPDIFF(YEAR, fecha_inicio, fecha_fin) calcula la diferencia en años entre dos fechas. CURDATE() retorna la fecha actual, por lo que esto da los años trabajados."
+  },
+  {
+    q: "¿Para qué sirve GROUP BY en esta consulta?",
+    code: `<span class="kw">SELECT</span> <span class="col">gender</span>, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cantidad\n<span class="kw">FROM</span> <span class="tbl">employees</span>\n<span class="kw">GROUP BY</span> <span class="col">gender</span>;`,
+    options: ["Ordena los resultados por género", "Agrupa filas con el mismo valor de gender para contar por grupo", "Filtra empleados por género", "Elimina duplicados"],
+    correct: 1,
+    explanation: "GROUP BY agrupa las filas que tienen el mismo valor en la columna especificada. Con COUNT(*) obtenemos cuántos empleados hay de cada género (M y F)."
+  },
+  {
+    q: "¿Qué hace el JOIN en esta consulta?",
+    code: `<span class="kw">SELECT</span> d.dept_name, <span class="fn">COUNT</span>(de.emp_no)\n<span class="kw">FROM</span> <span class="tbl">departments</span> d\n<span class="kw">JOIN</span> <span class="tbl">dept_emp</span> de <span class="kw">ON</span> d.dept_no = de.dept_no\n<span class="kw">GROUP BY</span> d.dept_no;`,
+    options: ["Elimina departamentos sin empleados que no coincidan", "Combina filas de departments y dept_emp donde dept_no coincide", "Crea una nueva tabla", "Filtra departamentos con pocos empleados"],
+    correct: 1,
+    explanation: "JOIN (INNER JOIN) combina filas de dos tablas donde la condición ON es verdadera. Aquí une departments con dept_emp usando el campo dept_no que tienen en común."
+  },
+  {
+    q: "¿Qué tipo de subconsulta contiene esta query?",
+    code: `<span class="kw">SELECT</span> e.first_name, s.salary\n<span class="kw">FROM</span> <span class="tbl">employees</span> e\n<span class="kw">JOIN</span> <span class="tbl">salaries</span> s <span class="kw">ON</span> e.emp_no = s.emp_no\n<span class="kw">WHERE</span> s.salary > (<span class="kw">SELECT</span> <span class="fn">AVG</span>(<span class="col">salary</span>) <span class="kw">FROM</span> <span class="tbl">salaries</span>);`,
+    options: ["Subconsulta correlacionada en SELECT", "Subconsulta escalar en WHERE para comparar con promedio", "Subconsulta en FROM como tabla derivada", "No tiene subconsulta"],
+    correct: 1,
+    explanation: "Es una subconsulta escalar en la cláusula WHERE. Devuelve un único valor (el promedio de salarios) que se usa para filtrar empleados que ganan más que ese promedio."
+  },
+  {
+    q: "¿Qué hace el CASE WHEN en esta consulta?",
+    code: `<span class="kw">CASE</span>\n  <span class="kw">WHEN</span> s.salary < <span class="num">50000</span> <span class="kw">THEN</span> <span class="str">'Bajo'</span>\n  <span class="kw">WHEN</span> s.salary <span class="kw">BETWEEN</span> <span class="num">50000</span> <span class="kw">AND</span> <span class="num">80000</span> <span class="kw">THEN</span> <span class="str">'Medio'</span>\n  <span class="kw">ELSE</span> <span class="str">'Alto'</span>\n<span class="kw">END</span> <span class="kw">AS</span> nivel`,
+    options: ["Filtra registros por rango de salario", "Clasifica el salario en categorías: Bajo, Medio o Alto", "Suma los salarios por categoría", "Cuenta empleados por nivel"],
+    correct: 1,
+    explanation: "CASE WHEN es equivalente a un if/else. Evalúa condiciones en orden y retorna el valor del primer THEN que se cumpla. El ELSE maneja todos los casos restantes (salary > 80000 = 'Alto')."
+  },
+  {
+    q: "¿Qué diferencia hay entre COUNT(*) y COUNT(columna)?",
+    code: `<span class="cm">-- Opción A</span>\n<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> <span class="tbl">employees</span>;\n\n<span class="cm">-- Opción B</span>\n<span class="kw">SELECT</span> <span class="fn">COUNT</span>(<span class="col">first_name</span>) <span class="kw">FROM</span> <span class="tbl">employees</span>;`,
+    options: ["Son exactamente iguales siempre", "COUNT(*) incluye NULLs, COUNT(columna) los ignora", "COUNT(columna) es más rápido", "COUNT(*) solo cuenta filas únicas"],
+    correct: 1,
+    explanation: "COUNT(*) cuenta todas las filas incluyendo NULLs. COUNT(columna) solo cuenta filas donde esa columna NO es NULL. Si first_name nunca es NULL, el resultado será igual."
+  },
+  {
+    q: "¿Qué hace SUM(CASE WHEN gender='M' THEN 1 ELSE 0 END)?",
+    code: `<span class="kw">SELECT</span> d.dept_name,\n  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> e.gender = <span class="str">'M'</span> <span class="kw">THEN</span> <span class="num">1</span> <span class="kw">ELSE</span> <span class="num">0</span> <span class="kw">END</span>) <span class="kw">AS</span> masculino\n<span class="kw">FROM</span> <span class="tbl">employees</span> e ...`,
+    options: ["Suma los salarios de hombres", "Cuenta el número de empleados masculinos por departamento", "Filtra solo empleados masculinos", "Convierte género a número"],
+    correct: 1,
+    explanation: "Esta es una técnica de 'pivot condicional': CASE asigna 1 a cada hombre y 0 a las mujeres, luego SUM los suma. El resultado es el conteo de empleados masculinos, equivalente a COUNT(*) WHERE gender='M'."
+  },
+  {
+    q: "¿Qué retorna CONCAT(first_name, ' ', last_name)?",
+    code: `<span class="kw">SELECT</span> <span class="fn">CONCAT</span>(<span class="col">first_name</span>, <span class="str">' '</span>, <span class="col">last_name</span>) <span class="kw">AS</span> name\n<span class="kw">FROM</span> <span class="tbl">employees</span>\n<span class="kw">WHERE</span> gender = <span class="str">'F'</span>;`,
+    options: ["Dos columnas separadas con el nombre y apellido", "El nombre completo como una sola cadena de texto", "Solo el primer nombre", "Un número con la longitud del nombre"],
+    correct: 1,
+    explanation: "CONCAT() une varias cadenas de texto en una sola. CONCAT('Ana', ' ', 'García') produce 'Ana García'. El alias AS name le da nombre a esa columna calculada."
+  },
+  {
+    q: "¿Qué hace LENGTH(first_name) = 5 en el WHERE?",
+    code: `<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">AS</span> cantidad\n<span class="kw">FROM</span> <span class="tbl">employees</span>\n<span class="kw">WHERE</span> <span class="fn">LENGTH</span>(<span class="col">first_name</span>) = <span class="num">5</span>;`,
+    options: ["Busca nombres que empiecen con '5'", "Filtra empleados cuyo primer nombre tiene exactamente 5 caracteres", "Cuenta solo los primeros 5 empleados", "Selecciona los primeros 5 caracteres del nombre"],
+    correct: 1,
+    explanation: "LENGTH() devuelve el número de caracteres de una cadena. WHERE LENGTH(first_name) = 5 filtra solo los nombres con exactamente 5 letras. Ej: 'Maria', 'Pedro', 'Laura'."
+  },
+  {
+    q: "¿Qué hace DATEDIFF(CURDATE(), hire_date)?",
+    code: `<span class="kw">SELECT</span> emp_no,\n  <span class="fn">DATEDIFF</span>(<span class="fn">CURDATE</span>(), <span class="col">hire_date</span>) <span class="kw">AS</span> dias_trabajados\n<span class="kw">FROM</span> <span class="tbl">employees</span>;`,
+    options: ["Devuelve la fecha de contratación formateada", "Calcula los días totales trabajados desde la fecha de contratación", "Resta dos años de la fecha actual", "Convierte días a años"],
+    correct: 1,
+    explanation: "DATEDIFF(fecha1, fecha2) retorna la diferencia en días entre dos fechas (fecha1 - fecha2). Con CURDATE() como primera fecha y hire_date como segunda, obtenemos los días transcurridos desde que fue contratado."
+  },
+  {
+    q: "¿Para qué sirve ORDER BY en esta consulta?",
+    code: `<span class="kw">SELECT</span> <span class="fn">YEAR</span>(<span class="col">hire_date</span>) <span class="kw">AS</span> anio, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total\n<span class="kw">FROM</span> <span class="tbl">employees</span>\n<span class="kw">GROUP BY</span> <span class="fn">YEAR</span>(<span class="col">hire_date</span>)\n<span class="kw">ORDER BY</span> anio;`,
+    options: ["Agrupa los datos por año", "Ordena los resultados de menor a mayor año", "Filtra solo años específicos", "Extrae el año de la fecha"],
+    correct: 1,
+    explanation: "ORDER BY ordena el resultado de la consulta. Sin ORDER BY, el orden de los resultados no está garantizado. Aquí ordena cronológicamente los años de contratación de menor a mayor (ASC por defecto)."
+  },
+  {
+    q: "¿Qué hace LIKE '%Engineer%' en el filtro?",
+    code: `<span class="kw">WHERE</span> t.title <span class="kw">LIKE</span> <span class="str">'%Engineer%'</span>`,
+    options: ["Busca títulos que empiecen exactamente con 'Engineer'", "Encuentra títulos que contengan la palabra 'Engineer' en cualquier posición", "Busca empleados de exactamente 8 caracteres", "Compara exactamente con el texto 'Engineer'"],
+    correct: 1,
+    explanation: "El comodín % en LIKE representa cualquier cantidad de caracteres. '%Engineer%' encuentra 'Engineer', 'Senior Engineer', 'Staff Engineer', etc. — cualquier título que contenga 'Engineer' en cualquier parte."
+  },
+  {
+    q: "¿Qué genera esta expresión de código de identificación?",
+    code: `<span class="fn">CONCAT</span>(\n  <span class="fn">LEFT</span>(first_name, <span class="num">1</span>),\n  <span class="fn">LEFT</span>(last_name, <span class="num">1</span>),\n  <span class="fn">DATE_FORMAT</span>(birth_date, <span class="str">'%Y%m'</span>),\n  <span class="str">'-'</span>,\n  <span class="fn">DATE_FORMAT</span>(hire_date, <span class="str">'%Y%m'</span>)\n) <span class="kw">AS</span> codigo_identificacion`,
+    options: ["El nombre completo del empleado", "Un código como 'JD196501-199203' con iniciales y fechas", "Solo el año de nacimiento y contratación", "Las iniciales separadas por guión"],
+    correct: 1,
+    explanation: "LEFT(str, n) toma los primeros n caracteres. DATE_FORMAT con '%Y%m' da año+mes (ej: '199203'). Para 'John Doe', nacido en enero 1965, contratado en marzo 1992: 'JD196501-199203'."
+  }
+];
+
+const practicaQuestions = [
+  {
+    q: "Escribe una consulta para obtener el salario promedio de todos los empleados.",
+    hint: "Usa la función AVG() sobre la columna salary de la tabla salaries.",
+    keywords: ["avg", "salary", "salaries"],
+    solution: "SELECT AVG(salary) AS promedio_salario FROM salaries;",
+    explanation: "AVG() calcula el promedio. La tabla salaries contiene todos los registros de salarios."
+  },
+  {
+    q: "Obtén el salario máximo y mínimo de la tabla salaries en una sola consulta.",
+    hint: "Usa MAX() y MIN() en el mismo SELECT.",
+    keywords: ["max", "min", "salary", "salaries"],
+    solution: "SELECT MAX(salary) AS salario_mayor, MIN(salary) AS salario_menor FROM salaries;",
+    explanation: "Puedes usar múltiples funciones de agregación en un mismo SELECT."
+  },
+  {
+    q: "Cuenta cuántos empleados hay de cada género.",
+    hint: "Usa COUNT(*) con GROUP BY sobre la columna gender.",
+    keywords: ["count", "gender", "group by", "employees"],
+    solution: "SELECT gender, COUNT(*) AS cantidad FROM employees GROUP BY gender;",
+    explanation: "GROUP BY agrupa filas con el mismo valor. COUNT(*) cuenta las filas de cada grupo."
+  },
+  {
+    q: "Muestra el nombre completo (first_name + space + last_name) de todas las empleadas (gender = 'F').",
+    hint: "Usa CONCAT() para unir las columnas y WHERE para filtrar por género.",
+    keywords: ["concat", "first_name", "last_name", "gender", "f"],
+    solution: "SELECT CONCAT(first_name, ' ', last_name) AS name FROM employees WHERE gender = 'F';",
+    explanation: "CONCAT() une cadenas de texto. El filtro WHERE gender = 'F' selecciona solo mujeres."
+  },
+  {
+    q: "Calcula los años de antigüedad de cada empleado desde su hire_date hasta hoy.",
+    hint: "Usa TIMESTAMPDIFF(YEAR, hire_date, CURDATE()).",
+    keywords: ["timestampdiff", "year", "hire_date", "curdate"],
+    solution: "SELECT emp_no, first_name, last_name, TIMESTAMPDIFF(YEAR, hire_date, CURDATE()) AS antiguedad FROM employees;",
+    explanation: "TIMESTAMPDIFF con YEAR calcula la diferencia en años completos entre dos fechas."
+  },
+  {
+    q: "Lista los departamentos junto con el número total de empleados en cada uno.",
+    hint: "Necesitas hacer un JOIN entre departments y dept_emp, luego GROUP BY.",
+    keywords: ["join", "departments", "dept_emp", "count", "group by"],
+    solution: "SELECT d.dept_no, d.dept_name, COUNT(de.emp_no) AS numero_empleados FROM departments d JOIN dept_emp de ON d.dept_no = de.dept_no GROUP BY d.dept_no, d.dept_name;",
+    explanation: "JOIN une las tablas por dept_no. GROUP BY agrupa por departamento. COUNT cuenta empleados por grupo."
+  },
+  {
+    q: "Obtén el salario promedio por departamento.",
+    hint: "Necesitas 3 tablas: departments, dept_emp y salaries. Usa múltiples JOINs.",
+    keywords: ["avg", "join", "departments", "dept_emp", "salaries", "group by"],
+    solution: "SELECT d.dept_no, d.dept_name, AVG(s.salary) AS salario_promedio FROM departments d JOIN dept_emp de ON d.dept_no = de.dept_no JOIN salaries s ON de.emp_no = s.emp_no GROUP BY d.dept_no, d.dept_name;",
+    explanation: "Se unen 3 tablas en cadena: departments → dept_emp → salaries. AVG() calcula el promedio de salarios por departamento."
+  },
+  {
+    q: "Muestra el salario máximo de cada título (title).",
+    hint: "Une la tabla titles con salaries por emp_no, usa MAX y GROUP BY title.",
+    keywords: ["max", "salary", "titles", "salaries", "group by", "title"],
+    solution: "SELECT t.title, MAX(s.salary) AS salary FROM titles t JOIN salaries s ON t.emp_no = s.emp_no GROUP BY t.title;",
+    explanation: "JOIN une titles con salaries. MAX() obtiene el salario más alto. GROUP BY agrupa por cada título distinto."
+  },
+  {
+    q: "Cuenta cuántos empleados masculinos (gender='M') tiene cada título.",
+    hint: "Usa JOIN entre titles y employees, WHERE gender='M', GROUP BY title.",
+    keywords: ["count", "gender", "m", "titles", "employees", "group by"],
+    solution: "SELECT t.title, COUNT(e.emp_no) AS total_masculino FROM titles t JOIN employees e ON t.emp_no = e.emp_no WHERE e.gender = 'M' GROUP BY t.title;",
+    explanation: "El filtro WHERE se aplica antes del GROUP BY. COUNT() cuenta solo los empleados masculinos por título."
+  },
+  {
+    q: "Clasifica a cada empleado como 'Bajo' (<50000), 'Medio' (50000-80000) o 'Alto' (>80000) según su salario más reciente.",
+    hint: "Usa CASE WHEN...THEN...ELSE...END. Para el salario más reciente usa una subconsulta con MAX(from_date).",
+    keywords: ["case", "when", "then", "else", "end", "salary"],
+    solution: "SELECT e.emp_no, e.first_name, e.last_name, CASE WHEN s.salary < 50000 THEN 'Bajo' WHEN s.salary BETWEEN 50000 AND 80000 THEN 'Medio' ELSE 'Alto' END AS nivel FROM employees e JOIN salaries s ON e.emp_no = s.emp_no WHERE s.from_date = (SELECT MAX(s2.from_date) FROM salaries s2 WHERE s2.emp_no = e.emp_no);",
+    explanation: "CASE WHEN evalúa condiciones en orden. La subconsulta en WHERE filtra el registro de salario más reciente de cada empleado."
+  }
+];
+
+const schemaData = [
+  { name: "employees", cols: [
+    { name: "emp_no", type: "INT", pk: true },
+    { name: "birth_date", type: "DATE" },
+    { name: "first_name", type: "VARCHAR" },
+    { name: "last_name", type: "VARCHAR" },
+    { name: "gender", type: "ENUM" },
+    { name: "hire_date", type: "DATE" }
+  ]},
+  { name: "salaries", cols: [
+    { name: "emp_no", type: "INT", pk: true },
+    { name: "salary", type: "INT" },
+    { name: "from_date", type: "DATE" },
+    { name: "to_date", type: "DATE" }
+  ]},
+  { name: "departments", cols: [
+    { name: "dept_no", type: "CHAR", pk: true },
+    { name: "dept_name", type: "VARCHAR" }
+  ]},
+  { name: "dept_emp", cols: [
+    { name: "emp_no", type: "INT", pk: true },
+    { name: "dept_no", type: "CHAR", pk: true },
+    { name: "from_date", type: "DATE" },
+    { name: "to_date", type: "DATE" }
+  ]},
+  { name: "titles", cols: [
+    { name: "emp_no", type: "INT", pk: true },
+    { name: "title", type: "VARCHAR" },
+    { name: "from_date", type: "DATE" },
+    { name: "to_date", type: "DATE" }
+  ]},
+  { name: "dept_manager", cols: [
+    { name: "dept_no", type: "CHAR", pk: true },
+    { name: "emp_no", type: "INT", pk: true },
+    { name: "from_date", type: "DATE" },
+    { name: "to_date", type: "DATE" }
+  ]}
+];
+
+// ===================== STATE =====================
+let teoriaAnswered = new Array(teoriaQuestions.length).fill(null);
+let practicaAnswered = new Array(practicaQuestions.length).fill(false);
+let scoreCorrect = 0, scoreWrong = 0, scoreCode = 0;
+
+// ===================== INIT =====================
+function init() {
+  renderTeoria();
+  renderPractica();
+  renderSchema();
+  updateProgress();
+}
+
+function renderSchema() {
+  const grid = document.getElementById('schemaGrid');
+  grid.innerHTML = schemaData.map(t => `
+    <div class="schema-table">
+      <div class="schema-table-name">${t.name}</div>
+      ${t.cols.map(c => `
+        <div class="schema-col ${c.pk ? 'pk' : ''}">
+          <span class="col-name">${c.pk ? '🔑 ' : ''}${c.name}</span>
+          <span class="col-type">${c.type}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderTeoria() {
+  const container = document.getElementById('tab-teoria');
+  container.innerHTML = `<p class="section-title">Preguntas de comprensión SQL</p>` +
+    teoriaQuestions.map((q, i) => `
+    <div class="question-card" id="tq-${i}">
+      <div class="q-header">
+        <div class="q-number">${i+1}</div>
+        <div class="q-title">${q.q}</div>
+      </div>
+      ${q.code ? `<div class="code-block">${q.code}</div>` : ''}
+      <div class="options">
+        ${q.options.map((o, j) => `
+          <button class="option" id="opt-${i}-${j}" onclick="answerTeoria(${i}, ${j})">${o}</button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="fb-${i}"></div>
+    </div>
+  `).join('');
+}
+
+function renderPractica() {
+  const container = document.getElementById('tab-practica');
+  container.innerHTML = `<p class="section-title">Escribe tus propias consultas SQL</p>` +
+    practicaQuestions.map((q, i) => `
+    <div class="question-card" id="pq-${i}">
+      <div class="q-header">
+        <div class="q-number">${i+1}</div>
+        <div class="q-title">${q.q}</div>
+      </div>
+      <div class="editor-area">
+        <div class="editor-header">
+          <div class="editor-dot"></div><div class="editor-dot"></div><div class="editor-dot"></div>
+          <span class="editor-title">query_${i+1}.sql</span>
+        </div>
+        <textarea class="sql-input" id="sql-${i}" placeholder="-- Escribe tu consulta SQL aquí...&#10;SELECT ..." rows="5"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="checkCode(${i})">▶ Ejecutar</button>
+        <button class="btn btn-secondary" onclick="toggleHint(${i})">💡 Pista</button>
+        <button class="btn btn-secondary" onclick="showSolution(${i})">👁 Ver solución</button>
+      </div>
+      <div class="hint-box" id="hint-${i}">${q.hint}</div>
+      <div class="feedback" id="pfb-${i}"></div>
+    </div>
+  `).join('');
+}
+
+// ===================== TEORIA LOGIC =====================
+function answerTeoria(qIndex, optIndex) {
+  if (teoriaAnswered[qIndex] !== null) return;
+  const q = teoriaQuestions[qIndex];
+  const isCorrect = optIndex === q.correct;
+  teoriaAnswered[qIndex] = isCorrect;
+
+  // disable all options
+  q.options.forEach((_, j) => {
+    const btn = document.getElementById(`opt-${qIndex}-${j}`);
+    btn.disabled = true;
+    if (j === q.correct) btn.classList.add('reveal-correct');
+  });
+
+  const selected = document.getElementById(`opt-${qIndex}-${optIndex}`);
+  selected.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+
+  const card = document.getElementById(`tq-${qIndex}`);
+  card.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+  const fb = document.getElementById(`fb-${qIndex}`);
+  fb.className = `feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+  fb.innerHTML = `${isCorrect ? '✅' : '❌'} ${q.explanation}`;
+
+  if (isCorrect) scoreCorrect++; else scoreWrong++;
+  updateScore();
+  updateProgress();
+  showToast(isCorrect ? '✅ ¡Correcto!' : '❌ Incorrecto, revisa la explicación.', isCorrect ? 'success' : 'error');
+}
+
+// ===================== PRACTICA LOGIC =====================
+function checkCode(i) {
+  const input = document.getElementById(`sql-${i}`).value.trim().toLowerCase();
+  const q = practicaQuestions[i];
+  const fb = document.getElementById(`pfb-${i}`);
+
+  if (!input || input === '') {
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = '⚠️ Escribe una consulta SQL primero.';
+    return;
+  }
+
+  // Keyword check
+  const missing = q.keywords.filter(kw => !input.includes(kw.toLowerCase()));
+  const hasSelect = input.includes('select');
+
+  if (!hasSelect) {
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = '❌ Tu consulta debe comenzar con SELECT.';
+    return;
+  }
+
+  if (missing.length === 0) {
+    if (!practicaAnswered[i]) {
+      practicaAnswered[i] = true;
+      scoreCode++;
+      updateScore();
+      updateProgress();
+    }
+    const card = document.getElementById(`pq-${i}`);
+    card.classList.add('correct');
+    fb.className = 'feedback show correct';
+    fb.innerHTML = `✅ ¡Excelente! Tu consulta contiene todos los elementos correctos.<br><small style="opacity:.8">${q.explanation}</small>`;
+    showToast('✅ ¡Consulta correcta!', 'success');
+  } else {
+    fb.className = 'feedback show incorrect';
+    fb.innerHTML = `❌ Parece que falta algo. Palabras clave esperadas: <strong>${missing.join(', ')}</strong>. Revisa la pista si la necesitas.`;
+    showToast('❌ Revisa tu consulta.', 'error');
+  }
+}
+
+function toggleHint(i) {
+  const hint = document.getElementById(`hint-${i}`);
+  hint.classList.toggle('show');
+}
+
+function showSolution(i) {
+  const q = practicaQuestions[i];
+  const ta = document.getElementById(`sql-${i}`);
+  ta.value = q.solution;
+  const fb = document.getElementById(`pfb-${i}`);
+  fb.className = 'feedback show correct';
+  fb.innerHTML = `💡 Solución mostrada. Analiza la lógica: ${q.explanation}`;
+}
+
+// ===================== SCORE & PROGRESS =====================
+function updateScore() {
+  document.getElementById('scoreCorrect').textContent = scoreCorrect;
+  document.getElementById('scoreWrong').textContent = scoreWrong;
+  document.getElementById('scoreCode').textContent = scoreCode;
+  const total = scoreCorrect + scoreWrong;
+  const pct = total > 0 ? Math.round((scoreCorrect / total) * 100) : 0;
+  document.getElementById('scorePct').textContent = pct + '%';
+}
+
+function updateProgress() {
+  const answeredT = teoriaAnswered.filter(x => x !== null).length;
+  const answeredP = practicaAnswered.filter(x => x).length;
+  const total = teoriaQuestions.length + practicaQuestions.length;
+  const done = answeredT + answeredP;
+  document.getElementById('progressFill').style.width = (done/total*100) + '%';
+  document.getElementById('progressCount').textContent = `${done} / ${total}`;
+}
+
+// ===================== TABS =====================
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+init();
+</script>
+</body>
+</html>
